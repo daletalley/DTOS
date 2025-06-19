@@ -3,11 +3,13 @@ import { LogbookComponent } from './logbook/logbook.component.js';
 import { QuickNotesComponent } from './quicknotes/quicknotes.component.js';
 import { VaultComponent } from './vault/vault.component.js';
 import { SettingsComponent } from './settings/settings.component.js';
+import { DataService } from './data.service.js';
 
 export class AppComponent {
   constructor(root) {
     this.root = root;
     this.current = null;
+    this.tasksComponent = null;
     this.render();
   }
 
@@ -41,19 +43,37 @@ export class AppComponent {
     this.content.innerHTML = '';
     switch(tab) {
       case 'tasks':
-        this.current = new TasksComponent(this.content);
+        if (!this.tasksComponent) {
+          this.tasksComponent = new TasksComponent(this.content);
+        } else {
+          this.tasksComponent.root = this.content;
+          this.tasksComponent.render();
+        }
+        this.current = this.tasksComponent;
+        this.currentType = 'tasks';
         break;
       case 'logbook':
         this.current = new LogbookComponent(this.content);
+        this.currentType = 'logbook';
         break;
       case 'notes':
         this.current = new QuickNotesComponent(this.content);
+        this.currentType = 'notes';
+        this.content.addEventListener('sendToTask', e => {
+          if (!this.tasksComponent) {
+            this.tasksComponent = new TasksComponent(document.createElement('div'));
+          }
+          this.tasksComponent.addTask(e.detail.title, '', '');
+          DataService.save('tasks', this.tasksComponent.tasks);
+        });
         break;
       case 'vault':
         this.current = new VaultComponent(this.content);
+        this.currentType = 'vault';
         break;
       case 'settings':
         this.current = new SettingsComponent(this.content);
+        this.currentType = 'settings';
         break;
     }
   }
